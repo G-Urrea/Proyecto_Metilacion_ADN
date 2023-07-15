@@ -14,3 +14,4 @@ matplotlib
 xgboost
 torch
 seaborn
+imblearn
