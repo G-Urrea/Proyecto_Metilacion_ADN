@@ -10,6 +10,11 @@ import os
 pd.options.mode.chained_assignment = None
 
 
+def create_folders(paths):
+    if not os.path.exists(paths):
+        os.makedirs(paths)
+
+
 def download_files_from_gd(files_dict):
     '''
     Función para descargar archivos desde google drive

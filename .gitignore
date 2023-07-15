@@ -1,5 +1,6 @@
 
 src/__pycache__/__init__.cpython-311.pyc
 src/__pycache__/get_data.cpython-311.pyc
+src/__pycache__
 .ipynb_checkpoints
 data/*
