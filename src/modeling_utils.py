@@ -94,26 +94,22 @@ def train_plot(train_losses, val_losses):
     plt.legend()
     plt.show()
 
-def create_dataloaders(x_train, y_train, x_val, y_val, x_test, y_test):
+def create_dataloaders(x_train, y_train, x_val, y_val):
     # Convertir los datos a tensores de PyTorch
     X_train_tensor = torch.tensor(x_train, dtype=torch.float32)
     y_train_tensor = torch.tensor(y_train, dtype=torch.float32)
     X_val_tensor = torch.tensor(x_val, dtype=torch.float32)
     y_val_tensor = torch.tensor(y_val, dtype=torch.float32)
-    X_test_tensor = torch.tensor(x_test, dtype=torch.float32)
-    y_test_tensor = torch.tensor(y_test, dtype=torch.float32)
+
 
     # Crear conjuntos de datos y dataloaders
     train_dataset = TensorDataset(X_train_tensor, y_train_tensor)
     val_dataset = TensorDataset(X_val_tensor, y_val_tensor)
-    test_dataset = TensorDataset(X_test_tensor, y_test_tensor)
-
 
     train_dataloader = DataLoader(train_dataset, batch_size=32, shuffle=True)
     val_dataloader = DataLoader(val_dataset, batch_size=32, shuffle=False)
-    test_dataloader = torch.utils.data.DataLoader(test_dataset, batch_size=32, shuffle=True)
 
-    return train_dataloader, val_dataloader, test_dataloader
+    return train_dataloader, val_dataloader
 
 def bar_metrics(y_test, y_pred, title="Model Performance Metrics de Random Forest usando data set reducido mediante ANOVA (test set)"):
     # Métricas
