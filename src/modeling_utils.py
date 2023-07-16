@@ -4,8 +4,11 @@ Funciones utiles para el modelamiento
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from torch.utils.data import TensorDataset, DataLoader
 from sklearn.metrics import accuracy_score, recall_score, precision_score, f1_score, cohen_kappa_score, roc_auc_score
+from sklearn.base import clone
 import matplotlib.pyplot as plt
+import numpy as np
 
 class NeuralNetwork(nn.Module):
     def __init__(self, in_features):
@@ -29,8 +32,15 @@ class NeuralNetwork(nn.Module):
         x = self.dropout(x)
         x = self.output(x)
         return torch.sigmoid(x)
+
+    def predict(self, x):
+        self.eval()
+        with torch.no_grad():
+            output = self.forward(x)
+            output = np.where(output.detach().numpy()>0.5, 1 , 0)
+        return output
     
-def simple_binary_train(model, train_dataloader, val_dataloader, epochs=50):
+def simple_binary_train(model, train_dataloader, val_dataloader, epochs=50, report_every=10):
     # Definir función de pérdida y optimizador
     loss_fn = nn.BCELoss()
     optimizer = optim.Adam(model.parameters(), lr=0.001)
@@ -69,11 +79,41 @@ def simple_binary_train(model, train_dataloader, val_dataloader, epochs=50):
 
             val_loss /= len(val_dataloader.dataset)
             val_losses.append(val_loss)
-
-        # Imprimir métricas de entrenamiento y validación en cada época
-        print(f"Epoch: {epoch+1}/{epochs}, Train Loss: {train_loss:.4f}, Val Loss: {val_loss:.4f}")
+        if epoch%report_every==0:
+            # Imprimir métricas de entrenamiento y validación
+            print(f"Epoch: {epoch+1}/{epochs}, Train Loss: {train_loss:.4f}, Val Loss: {val_loss:.4f}")
     return train_losses, val_losses
 
+def train_plot(train_losses, val_losses):
+    # Gráfico de la pérdida en función de la época
+    epochs = len(train_losses)
+    plt.plot(range(1, epochs+1), train_losses, label='Train Loss')
+    plt.plot(range(1, epochs+1), val_losses, label='Val Loss')
+    plt.xlabel('Epoch')
+    plt.ylabel('Loss')
+    plt.legend()
+    plt.show()
+
+def create_dataloaders(x_train, y_train, x_val, y_val, x_test, y_test):
+    # Convertir los datos a tensores de PyTorch
+    X_train_tensor = torch.tensor(x_train, dtype=torch.float32)
+    y_train_tensor = torch.tensor(y_train, dtype=torch.float32)
+    X_val_tensor = torch.tensor(x_val, dtype=torch.float32)
+    y_val_tensor = torch.tensor(y_val, dtype=torch.float32)
+    X_test_tensor = torch.tensor(x_test, dtype=torch.float32)
+    y_test_tensor = torch.tensor(y_test, dtype=torch.float32)
+
+    # Crear conjuntos de datos y dataloaders
+    train_dataset = TensorDataset(X_train_tensor, y_train_tensor)
+    val_dataset = TensorDataset(X_val_tensor, y_val_tensor)
+    test_dataset = TensorDataset(X_test_tensor, y_test_tensor)
+
+
+    train_dataloader = DataLoader(train_dataset, batch_size=32, shuffle=True)
+    val_dataloader = DataLoader(val_dataset, batch_size=32, shuffle=False)
+    test_dataloader = torch.utils.data.DataLoader(test_dataset, batch_size=32, shuffle=True)
+
+    return train_dataloader, val_dataloader, test_dataloader
 
 def bar_metrics(y_test, y_pred, title="Model Performance Metrics de Random Forest usando data set reducido mediante ANOVA (test set)"):
     # Métricas
@@ -98,3 +138,25 @@ def bar_metrics(y_test, y_pred, title="Model Performance Metrics de Random Fores
     # Mostrar los gráficos
     plt.tight_layout()
     plt.show()
+
+def fit_estimators_from_dict(x,  y, basic_estimators):
+    '''
+        - basic_estimators: diccionario con tipo de estimadores {'clf': clf}
+    '''
+    fitted_dict = {}
+    for estimator in basic_estimators:
+        model = clone(basic_estimators[estimator])
+        name = type(model).__name__
+        fitted_dict[name] = model
+        fitted_dict[name].fit(x, y)
+        
+    return fitted_dict
+
+def predict_from_dict(x, estimators):
+    '''
+        - estimators: diccionario con estimadores fitteados
+    '''
+    preds = {}
+    for estim in estimators:
+        preds[estim] = estimators[estim].predict(x)
+    return preds
