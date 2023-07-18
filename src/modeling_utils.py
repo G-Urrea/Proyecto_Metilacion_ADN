@@ -5,10 +5,12 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import TensorDataset, DataLoader
-from sklearn.metrics import accuracy_score, recall_score, precision_score, f1_score, cohen_kappa_score, roc_auc_score
+from sklearn.metrics import balanced_accuracy_score, accuracy_score, recall_score, precision_score, f1_score, cohen_kappa_score, roc_auc_score
 from sklearn.base import clone
 import matplotlib.pyplot as plt
+import seaborn as sns
 import numpy as np
+import pandas as pd
 
 class NeuralNetwork(nn.Module):
     def __init__(self, in_features):
@@ -134,6 +136,24 @@ def bar_metrics(y_test, y_pred, title="Model Performance Metrics de Random Fores
     # Mostrar los gráficos
     plt.tight_layout()
     plt.show()
+
+def metrics_heatmap(y_test, predictions, title=''):
+    metrics_dict = {'Metrics':['Accuracy', 'Accuracy(Balanced)', 'Recall', 'Precision', 'F1', 'Cohen Kappa', 'ROC AUC']}
+    for estim in predictions:
+        
+        y_pred = predictions[estim]
+        accuracy = accuracy_score(y_test, y_pred)
+        bal_acc = balanced_accuracy_score(y_test, y_pred)
+        rec = recall_score(y_test, y_pred)
+        prec= precision_score(y_test, y_pred)
+        f1 = f1_score(y_test, y_pred)
+        cohen_kappa = cohen_kappa_score(y_test, y_pred)
+        roc_auc = roc_auc_score(y_test, y_pred)
+
+        metrics_dict[estim] = [accuracy, bal_acc, rec, prec, f1, cohen_kappa, roc_auc]
+    sns.heatmap(pd.DataFrame(metrics_dict).set_index('Metrics'), annot=True, fmt=".3f")
+    plt.xticks(rotation=45)
+    plt.title(title)
 
 def fit_estimators_from_dict(x,  y, basic_estimators):
     '''
