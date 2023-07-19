@@ -105,18 +105,19 @@ def get_relevant_cpg(df, max_iter = 20, thresh = 0.95):
 
   return obtained_features
     
-def get_gene_df(df: pd.DataFrame, mapping):
+def get_gene_df(df: pd.DataFrame, mapping, fun='mean'):
   '''
-  Retorna df con metilación promedio de genes.
+  Retorna df con metilación de genes, en base a una medida de agregación.
     - df: dataframe con sitios CpG
     - mapping: dataframe con columnas UCSC_RefGene_Name (nombre del gen) y IlmnID (lista de sitios CpG)
+    - fun: Función de agregación compatible con pandas
   '''
   gene_df = pd.DataFrame()
   columns = []
   mean_cpgs = []
   for _, row in mapping.iterrows():
     columns.append(row['UCSC_RefGene_Name'])
-    mean_cpgs.append(df.loc[:, df.columns.isin(row['IlmnID'])].mean(axis=1))
+    mean_cpgs.append(df.loc[:, df.columns.isin(row['IlmnID'])].agg(func = fun, axis=1))
   gene_df = pd.concat(mean_cpgs, axis=1)
   gene_df.columns = columns
   return gene_df
